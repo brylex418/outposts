@@ -1,0 +1,128 @@
+Resources:
+  LambdaNetworkRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: Lambda-Deploy-Subnets
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:createsubnet'
+                  - 'ec2:createtags'
+                  - 'ec2:deletesubnet'
+                Resource:
+                  - '*'
+  
+  CreateSubnetLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Description: This function creates some subnets on an outpost
+      Code:
+        ZipFile: |-
+          import boto3
+          import os
+          import cfnresponse
+          import logging
+
+          log = logging.getLogger(__name__)
+          outpost_az = os.environ['opaz']
+          cpmmaincidr = os.environ['cpmmaincidr']
+          oparn = os.environ['oparn']
+          vpcid = os.environ['vpcid']
+          
+          def lambda_handler(event, context):
+            logging.basicConfig(level=logging.DEBUG)
+            log = logging.getLogger(__name__)
+            responseData = {}
+            physicalResourceId = {}
+            ec2 = boto3.client('ec2')
+            
+            try:
+              if event['RequestType'] == 'Create':
+                cpmmain = ec2.create_subnet(
+                AvailabilityZone=outpost_az, 
+                CidrBlock=cpmmaincidr, 
+                OutpostArn=oparn, 
+                VpcId=vpcid
+                )
+                cpmmainId = (cpmmain['Subnet']['SubnetId'])
+
+                cprmmaintag = ec2.create_tags(
+                Resources=[
+                cpmmainId
+                  ],
+                Tags=[
+                  {
+                    'Key': 'Name',
+                    'Value': 'CPMMainSubnet'
+                  }
+                  ]
+                )
+              response = {'subnet': physicalResourceId}
+              return cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
+
+            except Delete:
+              if event['RequestType'] == 'Delete':
+                cpmmaindelete = ec2.delete_subnet(
+                  SubnetId=cpmmainId,
+                )
+              response = {'subnet': physicalResourceId}
+              return cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
+
+            except Failure:
+              return cfnresponse.send(event, context, cfnresponse.FAILED, {}, physicalResourceId)
+      Environment:
+        Variables:
+          opaz: !Ref outpostAz
+          oparn: !Ref outpostArn
+          vpcid: !Ref vpcid
+          cpmmaincidr: !Ref cpmmaincidr
+        # psmmaincidr: !Ref psmmaincidr
+        # psmsshmaincidr: !Ref psmsshmaincidr
+        # ptamaincidr: !Ref ptamaincidr
+        # pvwamaincidr: !Ref pvwamaincidr
+        # vaulmaincidr: !Ref vualtmaincidr
+        # cpmdrcidr: !Ref cpmdrcidr
+        # psmdrcidr: !Ref psmdrcidr
+        # psmsshdrcidr: !Ref psmsshdrcidr
+        # ptadrcidr: !Ref ptadrcidr
+        # pvwadrcidr: !Ref pvwadrcidr
+        # vualtdrcidr: !Ref vaultdrcidr
+      Runtime: python3.7
+      Handler: index.lambda_handler
+      Timeout: 60
+      Role: !GetAtt LambdaNetworkRole.Arn
+    
+  InvokeSubnetFunction:
+    Type: AWS::CloudFormation::CustomResource
+    Version: '1.0'
+    Properties:
+      ServiceToken: !GetAtt CreateSubnetLambda.Arn
+
+Parameters:
+  outpostAz:
+    Type: String
+    Description: This is the AZ the outpost is in 
+    Default: 
+  outpostArn:
+    Type: String
+    Description: The ARN of the Outpost
+    Default: 
+  vpcid:
+    Type: String
+    Description: The VPC id
+    Default: 
+  cpmmaincidr:
+    Type: String
+    Description: The CIDR Block for CPM Main Machine
