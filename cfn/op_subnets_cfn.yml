@@ -21,23 +21,43 @@ Resources:
                   - 'ec2:createsubnet'
                   - 'ec2:createtags'
                   - 'ec2:deletesubnet'
+                  - 'ec2:deletetags'
                 Resource:
                   - '*'
+        - PolicyName: Lambda-Get-S3-Layer
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource:
+                  - arn:aws:s3:::brylex-lambda-layers-otl/*
+  
+  OutpostSubnetFunction:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleRuntimes: [python3.7]
+      Content:
+        S3Bucket: !Ref LambdaLayerBucket
+        S3Key: !Ref LambdaLayerZipFile
+
   
   CreateSubnetLambda:
     Type: 'AWS::Lambda::Function'
     Properties:
       Description: This function creates some subnets on an outpost
+      Layers: [!Ref OutpostSubnetFunction]
       Code:
         ZipFile: |-
-          import boto3
-          import os
-          import cfnresponse
+          import op_subnet
+          import os 
           import logging
+          import cfnresponse
 
           log = logging.getLogger(__name__)
           outpost_az = os.environ['opaz']
-          cpmmaincidr = os.environ['cpmmaincidr']
+          # cpmmaincidr = os.environ['cpmmaincidr']
           oparn = os.environ['oparn']
           vpcid = os.environ['vpcid']
           
@@ -46,38 +66,25 @@ Resources:
             log = logging.getLogger(__name__)
             responseData = {}
             physicalResourceId = {}
-            ec2 = boto3.client('ec2')
             
             try:
               if event['RequestType'] == 'Create':
-                cpmmain = ec2.create_subnet(
-                AvailabilityZone=outpost_az, 
-                CidrBlock=cpmmaincidr, 
-                OutpostArn=oparn, 
-                VpcId=vpcid
-                )
-                cpmmainId = (cpmmain['Subnet']['SubnetId'])
 
-                cprmmaintag = ec2.create_tags(
-                Resources=[
-                cpmmainId
-                  ],
-                Tags=[
-                  {
-                    'Key': 'Name',
-                    'Value': 'CPMMainSubnet'
-                  }
-                  ]
-                )
-              response = {'subnet': physicalResourceId}
+                subnet1 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.185.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+
+
+              response = {'subnet1': physicalResourceId}
+              print('Created Subnets on outpost')
               return cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
 
             except Delete:
               if event['RequestType'] == 'Delete':
-                cpmmaindelete = ec2.delete_subnet(
-                  SubnetId=cpmmainId,
-                )
+                
+                op_subnet.deleteSubnet(physicalResourceId)
+
+
               response = {'subnet': physicalResourceId}
+              print('Deleted Subnets on outpost')
               return cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, physicalResourceId)
 
             except Failure:
@@ -87,7 +94,7 @@ Resources:
           opaz: !Ref outpostAz
           oparn: !Ref outpostArn
           vpcid: !Ref vpcid
-          cpmmaincidr: !Ref cpmmaincidr
+          # cpmmaincidr: !Ref cpmmaincidr
         # psmmaincidr: !Ref psmmaincidr
         # psmsshmaincidr: !Ref psmsshmaincidr
         # ptamaincidr: !Ref ptamaincidr
@@ -111,18 +118,26 @@ Resources:
       ServiceToken: !GetAtt CreateSubnetLambda.Arn
 
 Parameters:
+  LambdaLayerBucket:
+    Type: String
+    Description: Bucket that holds Lambda Layer
+    Default: brylex-lambda-layers-otl
+  LambdaLayerZipFile:
+    Type: String
+    Description: key for the s3 object for lambda layer (must be a .zip)
+    Default: python-layer.zip
   outpostAz:
     Type: String
     Description: This is the AZ the outpost is in 
-    Default: 
+    Default: us-west-2a
   outpostArn:
     Type: String
     Description: The ARN of the Outpost
-    Default: 
+    Default: arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9
   vpcid:
     Type: String
     Description: The VPC id
-    Default: 
-  cpmmaincidr:
-    Type: String
-    Description: The CIDR Block for CPM Main Machine
+    Default: vpc-092e3e79a9ca00270
+  # cpmmaincidr:
+  #   Type: String
+  #   Description: The CIDR Block for CPM Main Machine
