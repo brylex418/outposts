@@ -70,8 +70,20 @@ Resources:
             try:
               if event['RequestType'] == 'Create':
 
-                subnet1 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.185.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
-
+                subnet1 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.186.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet2 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.187.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet3 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.188.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet4 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.189.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet5 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.190.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet6 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.191.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet7 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.192.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet8 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.193.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet9 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.194.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet10 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.195.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet11 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.196.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet12 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.197.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet13 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.198.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
+                subnet14 = op_subnet.createAndTagSubnet('us-west-2a', 'vpc-092e3e79a9ca00270', '10.0.199.0/24', 'arn:aws:outposts:us-west-2:131562444230:outpost/op-0cc27b83880c7d8e9', 'test')
 
               response = {'subnet1': physicalResourceId}
               print('Created Subnets on outpost')
